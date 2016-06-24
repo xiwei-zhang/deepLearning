@@ -2,6 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 import ipdb
+import time
 
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
@@ -72,6 +73,7 @@ y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
 
 ## Train and Evaluate the Model
+t_begin = time.time()
 cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y_conv), reduction_indices=[1]))
 train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
 correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
@@ -87,6 +89,8 @@ for i in range(20000):
 print("test accuracy %g"%accuracy.eval(feed_dict={
     x: mnist.test.images, y_: mnist.test.labels, keep_prob: 1.0}))
 
+t_end = time.time()
+print ("time used: ", t_begin - t_end)
                         
 
 
