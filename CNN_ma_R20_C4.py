@@ -23,7 +23,7 @@ pattern1 = ".+/(?P<folder>[0-9a-zA-Z]+)_(?P<image>[0-9a-zA-Z]+).txt"
 re1 = re.compile(pattern1)
 R = 10 # 51*51
 size = R*2
-R_FP_TP  = 20 # ratio of FP/TP
+R_FP_TP  = 30 # ratio of FP/TP
 drop_out = 0.5 
 
 FLIP = 0
@@ -33,6 +33,8 @@ BALANCE_SETS = 0
 # train_image_set = np.linspace(0,146,147).astype(np.uint16)
 # train_image_set = np.linspace(0,99,100).astype(np.uint16)
 # test_image_set = np.linspace(147,148,1).astype(np.uint16)
+
+imResizeTable = {1440:10, 1504:10, 2048:12, 2544:15}
 
 def getTrainingData():
    print "testImage", testIdx
@@ -59,9 +61,10 @@ def getTrainingData():
        imASF = misc.imread(ASF_image)
        axis0 = imASF.shape[0]
        axis1 = imASF.shape[1]
-       imASFPadd = np.ndarray(shape=(axis0+R*2,axis1+R*2), dtype='uint8')
-       imASFPadd[R:axis0+R, R:axis1+R] = imASF
-       imASFPadd = imASFPadd / 255.0
+       R0 = imResizeTable[axis1]
+       imASFPadd = np.ndarray(shape=(axis0+R0*2,axis1+R0*2), dtype='uint8')
+       imASFPadd[R0:axis0+R0, R0:axis1+R0] = imASF
+       # imASFPadd = imASFPadd / 255.0
    
        ## Filter candidates
        ##  Keep all TP candidates
@@ -89,10 +92,14 @@ def getTrainingData():
        for candiIdx in TPCandiIdxList:
            line = lines[candiIdx]
            words = line.split()
-           x_center = int(words[0]) + R
-           y_center = int(words[1]) + R
+           x_center = int(words[0]) + R0
+           y_center = int(words[1]) + R0
            
-           imCrop = imASFPadd[y_center-R : y_center+R, x_center-R:x_center+R]
+           imCrop = imASFPadd[y_center-R0 : y_center+R0, x_center-R0:x_center+R0]
+           if (axis1 != 1440 and axis1 != 1504):
+               imCrop = misc.imresize(imCrop,(size,size))
+           if (imCrop.shape != (size,size)):
+               print "ERROR !!!!"
            trainning_set.append(imCrop)
 
            if words[-1] == '1':
@@ -131,11 +138,10 @@ def getTrainingData():
                         trainning_class.append([0,1])
 
                     
-
-            
-   
    array_trainning_set = np.reshape(trainning_set, (len(trainning_set), size*size))
+   array_trainning_set = array_trainning_set /255.0
    array_trainning_class = np.reshape(trainning_class, (len(trainning_class), 2))
+
    return (array_trainning_set, array_trainning_class, test_image_set)
 
 
@@ -172,14 +178,14 @@ if __name__ == "__main__":
 
         ###################################################################3
         #### SETUP CNN
-        tf.set_random_seed(1234) 
+        # tf.set_random_seed(1234) 
 
         sess = tf.InteractiveSession()
         x = tf.placeholder(tf.float32, [None, size*size])
         y_ = tf.placeholder(tf.float32, [None, 2])
         
         #First Convolutional Layer
-        W_conv1 = weight_variable([3, 3, 1, 64])
+        W_conv1 = weight_variable([5, 5, 1, 64])
         b_conv1 = bias_variable([64])
         x_image = tf.reshape(x, [-1,size,size,1])
         h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
@@ -292,9 +298,9 @@ if __name__ == "__main__":
             imASF = misc.imread(ASF_image)
             axis0 = imASF.shape[0]
             axis1 = imASF.shape[1]
-            imASFPadd = np.ndarray(shape=(axis0+R*2,axis1+R*2), dtype='uint8')
-            imASFPadd[R:axis0+R, R:axis1+R] = imASF
-            imASFPadd = imASFPadd / 255.0
+            R0 = imResizeTable[axis1]
+            imASFPadd = np.ndarray(shape=(axis0+R0*2,axis1+R0*2), dtype='uint8')
+            imASFPadd[R0:axis0+R0, R0:axis1+R0] = imASF
     
             ## Keep all candidates
             candi_file = open(txt_file, 'r')
@@ -304,11 +310,14 @@ if __name__ == "__main__":
             centers = []
             for line in lines:
                 words = line.split()
-                x_center = int(words[0]) + R
-                y_center = int(words[1]) + R
-                centers.append([x_center - R, y_center - R])
+                x_center = int(words[0]) + R0
+                y_center = int(words[1]) + R0
+                centers.append([x_center - R0, y_center - R0])
                 
-                imCrop = imASFPadd[y_center-R : y_center+R, x_center-R:x_center+R]
+                imCrop = imASFPadd[y_center-R0 : y_center+R0, x_center-R0:x_center+R0]
+                if (axis1 != 1440 or axis1 != 1504):
+                    imCrop = misc.imresize(imCrop,(size,size))
+
                 test_set.append(imCrop)
     
                 if words[-1] == '1':
@@ -321,8 +330,8 @@ if __name__ == "__main__":
     
             array_test_set = np.reshape(test_set, (len(test_set), size*size))
             array_test_class = np.reshape(test_class, (len(test_class), 2))
+            array_test_set = array_test_set / 255.0
             
-    
             out_filename =output_path +"/"+folder+"_"+image+".txt"
             print "  ",out_filename
             f = open(out_filename, 'w')
@@ -346,7 +355,6 @@ if __name__ == "__main__":
                 idxBegin = idxEnd
     
             f.close()
-            ipdb.set_trace()
         sess.close()
     
 

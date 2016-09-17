@@ -465,6 +465,7 @@ void writeFile(MACand *maCandList, int N, int* imInfo){
 MACand* ccAnalyseMA(Mat maCandiRaw, Mat imgreen, Mat imASF, Mat imROI, Mat imMainVesselGB, 
 	Mat imMainVesselASF, Mat imMainVesselOrient, Mat imMainVesselSup, Mat imGT, int* imInfo){
 		
+                cout<<"(DBG) Pass here 1"<<endl;
 		int imSize[2] = {imgreen.rows,imgreen.cols};
 
 		Mat imMaxiG = imgreen.clone();
@@ -488,6 +489,7 @@ MACand* ccAnalyseMA(Mat maCandiRaw, Mat imgreen, Mat imASF, Mat imROI, Mat imMai
 		Label(maCandiRaw,imtemp32,6);
 		int N = labelCount(imtemp32);
 		cout<<N<<endl;
+                cout<<"(DBG) Pass here 2"<<endl;
 
 		MACand *maCandList = new MACand[N];
 
@@ -511,6 +513,8 @@ MACand* ccAnalyseMA(Mat maCandiRaw, Mat imgreen, Mat imASF, Mat imROI, Mat imMai
 				if (imtemp2.at<uchar>(j,i)>0) maCandList[imtemp32.at<int>(j,i)-1].isGT=1;
 			}
 		}
+                cout<<"(DBG) Pass here 3"<<endl;
+
 		
 		for (int i=0; i<N; i++){
 			maCandList[i].labelref = i;
@@ -523,15 +527,16 @@ MACand* ccAnalyseMA(Mat maCandiRaw, Mat imgreen, Mat imASF, Mat imROI, Mat imMai
 			if (maCandList[i].H > maCandList[i].W) maCandList[i].WH = float(maCandList[i].W)/maCandList[i].H;
 			else maCandList[i].WH = float(maCandList[i].H)/maCandList[i].W;
 
-			maCandList[i].vesselAnalyse(imASF,maCandiRaw,imMainVesselASF,imMainVesselOrient,imtemp32,imInfo);
-			maCandList[i].geoLength(imMaASF,imPerimeter,imtemp1);
+                        // maCandList[i].vesselAnalyse(imASF,maCandiRaw,imMainVesselASF,imMainVesselOrient,imtemp32,imInfo);
+                        // maCandList[i].geoLength(imMaASF,imPerimeter,imtemp1);
 
-			maCandList[i].envAnalyse(imASF,maCandiRaw,imInfo);
+                        // maCandList[i].envAnalyse(imASF,maCandiRaw,imInfo);
 		}
 
 	
 
-		
+                cout<<"(DBG) Pass here 4"<<endl;
+
 
 		writeFile(maCandList,N,imInfo);
 		delete[] maCandList;
@@ -647,18 +652,21 @@ void detectMA(Mat imgreenR, Mat imROIR, Mat imASFR, Mat imBorderReflectionR, Mat
 
 	//========================================================
 	// Gabor vessel analysis
-	vesselAnalyseGabor(imASFR,imMainVesselGB,imMainVesselOrient, imMainVesselSup, imMainVesselASF, imInfoR);
-	float meanVessel(0), np(0);
-	for (int j=0; j<imASFR.rows; j++){
-		for (int i=0; i<imASFR.cols; i++){
-			if (imMainVesselASF.at<uchar>(j,i) == 0) continue;
-			meanVessel += imMainVesselASF.at<uchar>(j,i);
-			np++;
-		}
-	}
-	if (np==0) meanVessel=0;
-	else meanVessel /= np;
-	cout<<"mean vessel: "<<meanVessel<<endl;
+        if (0){
+            cout<<"(DBG) PASS HERE"<<endl;
+            vesselAnalyseGabor(imASFR,imMainVesselGB,imMainVesselOrient, imMainVesselSup, imMainVesselASF, imInfoR);
+            float meanVessel(0), np(0);
+            for (int j=0; j<imASFR.rows; j++){
+                for (int i=0; i<imASFR.cols; i++){
+                    if (imMainVesselASF.at<uchar>(j,i) == 0) continue;
+                    meanVessel += imMainVesselASF.at<uchar>(j,i);
+                    np++;
+                }
+            }
+            if (np==0) meanVessel=0;
+            else meanVessel /= np;
+            cout<<"mean vessel: "<<meanVessel<<endl;
+        }
 	//========================================================
 
 
