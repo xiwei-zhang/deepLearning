@@ -176,9 +176,9 @@ void MACand::vesselAnalyse(Mat imASF, Mat maCandiRaw, Mat imMainVesselASF, Mat i
 	
 	else inVessel = 0;
 
-	if (meanVessel==0) ratioMeanVessel = 255;
+        if (meanVessel < 0.001) ratioMeanVessel = 5;
 	else ratioMeanVessel = meanRes/meanVessel;
-	if (inVessel==0) ratioInVessel = 255;
+        if (inVessel < 0.001) ratioInVessel = 5;
 	else ratioInVessel = meanRes/inVessel;
 }
 
@@ -527,10 +527,10 @@ MACand* ccAnalyseMA(Mat maCandiRaw, Mat imgreen, Mat imASF, Mat imROI, Mat imMai
 			if (maCandList[i].H > maCandList[i].W) maCandList[i].WH = float(maCandList[i].W)/maCandList[i].H;
 			else maCandList[i].WH = float(maCandList[i].H)/maCandList[i].W;
 
-                        // maCandList[i].vesselAnalyse(imASF,maCandiRaw,imMainVesselASF,imMainVesselOrient,imtemp32,imInfo);
-                        // maCandList[i].geoLength(imMaASF,imPerimeter,imtemp1);
+                        maCandList[i].vesselAnalyse(imASF,maCandiRaw,imMainVesselASF,imMainVesselOrient,imtemp32,imInfo);
+                        maCandList[i].geoLength(imMaASF,imPerimeter,imtemp1);
 
-                        // maCandList[i].envAnalyse(imASF,maCandiRaw,imInfo);
+                        maCandList[i].envAnalyse(imASF,maCandiRaw,imInfo);
 		}
 
 	
@@ -652,7 +652,7 @@ void detectMA(Mat imgreenR, Mat imROIR, Mat imASFR, Mat imBorderReflectionR, Mat
 
 	//========================================================
 	// Gabor vessel analysis
-        if (0){
+        if (1){
             cout<<"(DBG) PASS HERE"<<endl;
             vesselAnalyseGabor(imASFR,imMainVesselGB,imMainVesselOrient, imMainVesselSup, imMainVesselASF, imInfoR);
             float meanVessel(0), np(0);
@@ -679,7 +679,7 @@ void detectMA(Mat imgreenR, Mat imROIR, Mat imASFR, Mat imBorderReflectionR, Mat
 		3. remove by mean value in each CC
 		4. remove too long too small things.	*/
 	/************************************************************************/
-        int C_area_min = imInfoR[3]; // imInfoR[3]/2;
+        int C_area_min = imInfoR[3]/2; // imInfoR[3]/2;
 	if (C_area_min<4) C_area_min=4;
 
 	divide(imASFR,2,imtempR1);

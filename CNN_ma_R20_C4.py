@@ -14,21 +14,22 @@ import re
 # ipdb.set_trace()
 
 ## define constant
-input_path = "/home/seawave/work/you/src/ma/script/launch_script/imgProcResult"
+input_path = "/home/seawave/work/you/src/ma/script/launch_script/imgProcResult3"
 TP_path = "/home/seawave/work/you/src/ma/script/launch_script/crops/TP"
 FP_path = "/home/seawave/work/you/src/ma/script/launch_script/crops/FP"
 output_path = "/home/seawave/work/you/src/ma/script/launch_script/CNNResult"
+CNN_model_path = "/home/seawave/work/you/src/ma/script/launch_script/CNNModel/model.ckpt"
 
 pattern1 = ".+/(?P<folder>[0-9a-zA-Z]+)_(?P<image>[0-9a-zA-Z]+).txt"
 re1 = re.compile(pattern1)
 R = 10 # 51*51
 size = R*2
-R_FP_TP  = 30 # ratio of FP/TP
-drop_out = 0.5 
+R_FP_TP  = 10 # ratio of FP/TP
+drop_out = 0.5 #0.5 
 
 FLIP = 0
 ROTATION = 0
-BALANCE_SETS = 0
+BALANCE_SETS = 1
 # train_image_set = np.linspace(0,10,11).astype(np.uint16)
 # train_image_set = np.linspace(0,146,147).astype(np.uint16)
 # train_image_set = np.linspace(0,99,100).astype(np.uint16)
@@ -146,13 +147,13 @@ def getTrainingData():
 
 
 ## CNN functions
-def weight_variable(shape):
+def weight_variable(shape, name):
   initial = tf.truncated_normal(shape, stddev=0.1)
-  return tf.Variable(initial)
+  return tf.Variable(initial, name)
 
-def bias_variable(shape):
+def bias_variable(shape, name):
   initial = tf.constant(0.1, shape=shape)
-  return tf.Variable(initial)
+  return tf.Variable(initial, name)
   
 #Convolution and Pooling
 def conv2d(x, W):
@@ -185,8 +186,8 @@ if __name__ == "__main__":
         y_ = tf.placeholder(tf.float32, [None, 2])
         
         #First Convolutional Layer
-        W_conv1 = weight_variable([5, 5, 1, 64])
-        b_conv1 = bias_variable([64])
+        W_conv1 = weight_variable([5, 5, 1, 32], "W_conv1")
+        b_conv1 = bias_variable([32], "b_conv1")
         x_image = tf.reshape(x, [-1,size,size,1])
         h_conv1 = tf.nn.relu(conv2d(x_image, W_conv1) + b_conv1)
         h_pool1 = max_pool_2x2(h_conv1)
@@ -194,8 +195,8 @@ if __name__ == "__main__":
         size_pool /= 2
         
         #Second Convolutional Layer
-        W_conv2 = weight_variable([3, 3, 64, 64])
-        b_conv2 = bias_variable([64])
+        W_conv2 = weight_variable([3, 3, 32, 64], "W_conv2")
+        b_conv2 = bias_variable([64], "b_conv2")
         
         h_conv2 = tf.nn.relu(conv2d(N_norm1, W_conv2) + b_conv2)
         h_pool2 = max_pool_2x2(h_conv2)
@@ -203,8 +204,8 @@ if __name__ == "__main__":
         size_pool /= 2
         
         #Third Convolutional Layer
-        W_conv3 = weight_variable([3, 3, 64, 128])
-        b_conv3 = bias_variable([128])
+        W_conv3 = weight_variable([3, 3, 64, 64], "W_conv3")
+        b_conv3 = bias_variable([64], "b_conv3")
         
         h_conv3 = tf.nn.relu(conv2d(N_norm2, W_conv3) + b_conv3)
         # h_pool3 = max_pool_2x2(h_conv3)
@@ -219,25 +220,25 @@ if __name__ == "__main__":
         ## N_norm4 = tf.nn.lrn(h_conv4, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75, name='norm1')
 
         #Densely Connected Layer 1
-        W_fc1 = weight_variable([size_pool * size_pool * 128, 1024])
-        b_fc1 = bias_variable([1024])
+        W_fc1 = weight_variable([size_pool * size_pool * 64, 128], "W_fc1")
+        b_fc1 = bias_variable([128], "b_fc1")
         
-        N_norm4_flat = tf.reshape(N_norm3, [-1, size_pool * size_pool * 128])
+        N_norm4_flat = tf.reshape(N_norm3, [-1, size_pool * size_pool * 64])
         h_fc1 = tf.nn.relu(tf.matmul(N_norm4_flat, W_fc1) + b_fc1)
         
         #Densely Connected Layer 2
-        W_fc2 = weight_variable([1024, 512])
-        b_fc2 = bias_variable([512])
-        
-        h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
+        # W_fc2 = weight_variable([1024, 512])
+        # b_fc2 = bias_variable([512])
+        # 
+        # h_fc2 = tf.nn.relu(tf.matmul(h_fc1, W_fc2) + b_fc2)
 
         #Dropout
         keep_prob = tf.placeholder(tf.float32)
-        h_fc1_drop = tf.nn.dropout(h_fc2, keep_prob)
+        h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
         
         ## Readout layer
-        W_fc2 = weight_variable([512, 2])
-        b_fc2 = bias_variable([2])
+        W_fc2 = weight_variable([128, 2], "W_fc2")
+        b_fc2 = bias_variable([2], "b_fc2")
         
         y_conv=tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)
 
@@ -253,8 +254,10 @@ if __name__ == "__main__":
         accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
         sess.run(tf.initialize_all_variables())
     
+        saver = tf.train.Saver()
         prediction = tf.argmax(y_conv, 1)
         probabilities = y_conv
+        feat_h_fc1 = h_fc1
     
         ### START TRAINING
         N_sample = array_trainning_set.shape[0]
@@ -277,7 +280,9 @@ if __name__ == "__main__":
                 # print probabilities.eval(feed_dict={x: train_set, keep_prob: 1.0})
             train_step.run(feed_dict={x: train_set, y_: train_class, keep_prob: drop_out})
     
-        
+        ## save the variables
+        save_path = saver.save(sess, CNN_model_path)
+        print("Model saved in file: %s" % save_path)
     
         ###########################################################################################
         ### Test set 
@@ -347,14 +352,21 @@ if __name__ == "__main__":
                     idxEnd = idxBegin + 3000
         
                 FP_test_predict =  probabilities.eval(feed_dict={x: array_test_set[idxBegin:idxEnd], keep_prob: 1.0})
+                toto = feat_h_fc1.eval(feed_dict={x: array_test_set[idxBegin:idxEnd], keep_prob: 1.0})
+
                 for i in range(len(FP_test_predict)):
                     # imname = FP_files[IdxFPRand[NFP_train + i + idxBegin]]
                     reIdx = idxBegin + i
                     f.write(str(centers[reIdx][0]) + " " + str(centers[reIdx][1]) + " " + str(array_test_class[reIdx][1]) + " " + str(FP_test_predict[i][1]) + "\n")  
+
+                    if array_test_class[reIdx][1] == 1:
+                        print i
         
                 idxBegin = idxEnd
     
             f.close()
+            ipdb.set_trace()
+            
         sess.close()
     
 

@@ -1,4 +1,5 @@
 import pdb
+import ipdb
 import os
 import re
 import math
@@ -9,11 +10,10 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LogisticRegression
 
-from morphee import *
-import MorpheeFastPathOpeningPython as FPO
 import basicOperations
 
-
+pattern1 = ".+/(?P<folder>[0-9a-zA-Z]+)_(?P<image>[0-9a-zA-Z]+).txt"
+re1 = re.compile(pattern1)
 
 #######################################
 ## Feature analysis
@@ -57,18 +57,19 @@ def feature_imp(imp):
 
 
 #### 
-# LL = 20
-LL = 117
+LL = 22
+# LL = 117
 # trSet = 40
 ####
 
-path = "/home/zhang/work/image/ma6"
+path = "/home/seawave/work/you/src/ma/script/deepLearning/imgProcResult3"
 # path = "/home/zhang/work/image/Base_Crihan_ma4.0_crossV_500_trees"
 # path = "/home/zhang/work/image/Base_Crihan_ma_bea7.0_surEch"
 # path = "/home/zhang/work/image/exudate9b"
 # path = "/home/zhang/work/bea/ma_result_1.0"
 ## path = "E:\\work\\image\\Base_Crihan_ma1.0"
 # path = "E:\\work\\image\\exudate2"
+output_path = "/home/seawave/work/you/src/ma/script/deepLearning/RFResult"
 
 files = basicOperations.getFiles(path,'txt')
 
@@ -172,6 +173,10 @@ test_class = []
 test_orig = []
 for num in range(len(files)):
     print num
+    m1 = re1.match(files[num])
+    folder = m1.groupdict()['folder']
+    image = m1.groupdict()['image']
+    
     for x in test_set:
         learn_set.append(x)
     for x in test_class:
@@ -197,7 +202,7 @@ for num in range(len(files)):
 
 	######################################
     ## Sampling the learning set
-    if 0:
+    if 1:
         co_mult = 3
         learn_setS = []
         learn_classS = []
@@ -229,7 +234,7 @@ for num in range(len(files)):
 
     #######################################
     ## Multipling the learning set
-    if 1:
+    if 0:
         learn_setS = learn_set
         learn_classS = learn_class
         learn_origS = learn_orig
@@ -267,7 +272,7 @@ for num in range(len(files)):
     #######################################
     ## I. learning
     
-    rf = RandomForestClassifier(n_estimators = 200,  n_jobs = 6) 
+    rf = RandomForestClassifier(n_estimators = 100,  n_jobs = 3) 
 
     rf.fit(learn_setS,learn_classS)
 #    lr = LogisticRegression()
@@ -294,6 +299,22 @@ for num in range(len(files)):
     result = rf.predict_proba(test_set)
     #################################
     
+    #################################
+    ## write prediction output
+    out_filename =output_path +"/"+folder+"_"+image+".txt"
+    print "  ",out_filename
+    f = open(out_filename, 'w')
+    for idx in range(len(result)):
+        test_words = test_orig[idx].split()
+        x = int(test_words[1])
+        y = int(test_words[2])
+        f.write(str(x) + " " + str(y) + " " + str(result[idx][0]) + " " + str(result[idx][1]) + " " + str(test_class[idx]) + "\n")  
+
+
+    #################################
+    continue
+
+    ipdb.set_trace()
     #################################
     ## reconstruct
     maList = files[num]

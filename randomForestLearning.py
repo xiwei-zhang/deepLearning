@@ -22,21 +22,21 @@ def feature_imp(imp):
     # charact_list1= ["vIPic","vTHPic","W","H","area","volume","geodesic length","Npixels above  C","IC","THC","Imean","THmean","Imedian","THmedian","Inner IC","Inner Imean","Inner Imedian","Inner THC","Inner THmean","Inner THmedian","InnerIabovePic","Inner THabovePic","outter IC","outter Imean","outter Imedian","outter THC","outter THmean","outter THmedian","outter","outter THabovePic","circ1","circ2","perimeter"]
     # charact_list1= ["vTHPic","W","H","area","geodesic length","THmedian","N_CC_area1","N_CC_area2","N_CC_area1_L","N_CC_area2_L","circ1"]
 #    charact_list1= ["minTH","maxTH","meanTH","medianTH","minI","maxI","meanI","medianI","area","height","volume", "pics","candClass","borderDepth","VAR","UO","saturation","perimeter","distCenter","distMin","nPic_h","nPic_l","area_h","area_l"]
-#    charact_list1 = [\
-#        "maxRes","meanRes","meanVessel","inVessel","WH",\
-#        "area","length","circularity",\
-#        "n_winS_thL_ccS","n_winS_thL_ccL","n_winL_thL_ccS","n_winL_thL_ccL",\
-#        "n_winS_thH_ccS","n_winS_thH_ccL","n_winH_thL_ccS","n_winH_thL_ccL",]
-
     charact_list1 = [\
-        "maxRes","meanRes","RmeanVessel","RinVessel","meanVessel","inVessel",\
-        "A1","A2","A3","A4","A5","A6","A7","A8","A9","A10","A11","A12","A13","A14","A15","A16","A17","A18","A19","A20",\
-        "WH1","WH2","WH3","WH4","WH5","WH6","WH7","WH8","WH9","WH10","WH11","WH12","WH13","WH14","WH15","WH16","WH17","WH18","WH19","WH20",\
-        "L1","L2","L3","L4","L5","L6","L7","L8","L9","L10","L11","L12","L13","L14","L15","L16","L17","L18","L19","L20",\
-        "C1","C2","C3","C4","C5","C6","C7","C8","C9","C10","C11","C12","C13","C14","C15","C16","C17","C18","C19","C20",\
-        "M1","M2","M3","M4","M5","M6","M7","M8","M9","M10","M11","M12","M13","M14","M15","M16","M17","M18","M19","M20",\
+        "maxRes","meanRes","meanVessel","inVessel","WH",\
+        "area","length","circularity",\
         "n_winS_thL_ccS","n_winS_thL_ccL","n_winL_thL_ccS","n_winL_thL_ccL",\
         "n_winS_thH_ccS","n_winS_thH_ccL","n_winH_thL_ccS","n_winH_thL_ccL",]
+
+#    charact_list1 = [\
+#        "maxRes","meanRes","RmeanVessel","RinVessel","meanVessel","inVessel",\
+#        "A1","A2","A3","A4","A5","A6","A7","A8","A9","A10","A11","A12","A13","A14","A15","A16","A17","A18","A19","A20",\
+#        "WH1","WH2","WH3","WH4","WH5","WH6","WH7","WH8","WH9","WH10","WH11","WH12","WH13","WH14","WH15","WH16","WH17","WH18","WH19","WH20",\
+#        "L1","L2","L3","L4","L5","L6","L7","L8","L9","L10","L11","L12","L13","L14","L15","L16","L17","L18","L19","L20",\
+#        "C1","C2","C3","C4","C5","C6","C7","C8","C9","C10","C11","C12","C13","C14","C15","C16","C17","C18","C19","C20",\
+#        "M1","M2","M3","M4","M5","M6","M7","M8","M9","M10","M11","M12","M13","M14","M15","M16","M17","M18","M19","M20",\
+#        "n_winS_thL_ccS","n_winS_thL_ccL","n_winL_thL_ccS","n_winL_thL_ccL",\
+#        "n_winS_thH_ccS","n_winS_thH_ccL","n_winH_thL_ccS","n_winH_thL_ccL",]
 
     impD = {}
     num = [i for i in range(len(imp))]
@@ -73,8 +73,8 @@ def feature_imp(imp):
 
 
 #### 
-LL = 117
-# LL = 20
+# LL = 117
+LL = 22
 # trSet = 40
 ####
 path = "/home/seawave/work/you/src/ma/script/deepLearning/imgProcResult3"
@@ -179,14 +179,13 @@ if 1:
             ###########################or
             ## learn set
             i = 2
-            ipdb.set_trace()
             while i<LL-1:
                 word.append(float(words[i]))
                 i+=1
     
-            word.append(float(words[L-3]))
-            word_select = [word[i] for i in idx]
-            # word_select = word
+            # word.append(float(words[L-3]))
+            # word_select = [word[i] for i in idx]
+            word_select = word
             if word[0]==0:
                 N_error += 1
                 continue
@@ -202,7 +201,6 @@ if 1:
     
             ############################
         num_candi[j] -= N_error
-        ipdb.set_trace()
         f.close()
         j+=1
     

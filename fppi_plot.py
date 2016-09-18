@@ -1,14 +1,19 @@
-import pdb
+import ipdb
 
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn import metrics
+
+import basicOperations
 
 
 
-ma3a = open("ROC_eophtha_ma3_less.txt","r")
-ma3b = open("ROC_eophtha_ma3b.txt","r")
-ma4 = open("ROC_eophtha_ma4_up.txt","r")
-ma6 = open("ROC_eophtha_ma6.txt","r")
+##ma3a = open("ROC_eophtha_ma3_less.txt","r")
+##ma3b = open("ROC_eophtha_ma3b.txt","r")
+##ma4 = open("ROC_eophtha_ma4_up.txt","r")
+##ma6 = open("ROC_eophtha_ma6.txt","r")
+
+RFResult = "/home/seawave/work/you/src/ma/script/deepLearning/RFResult"
 
 # exd1 = open("ROC_HEIMED9b.txt","r")
 # exd0 = open("ROC_eophtha8_circX2_6.txt","r")
@@ -16,6 +21,73 @@ ma6 = open("ROC_eophtha_ma6.txt","r")
 # exd3 = open("ROC_eophtha9b.txt","r")
 # exd4 = open("ROC_diaret9b.txt","r")
 # exd5 = open("ROC_messidor9b.txt","r")
+
+nbP = 0
+nbN = 0
+
+def getROC(input_file):
+    global nbP
+    global nbN
+    y_class = []
+    y_score = []
+    files = basicOperations.getFiles(input_file, "txt")
+    for inputFile in files:
+        f = open(inputFile, 'r')
+        lines = f.readlines()
+        for line in lines:
+            words = line.split()
+            y_class.append(int(words[-1]))
+            y_score.append(float(words[-2]))
+            if words[-1] == "0":
+                nbN += 1
+            elif words[-1] == "1":
+                nbP += 1
+    return metrics.roc_curve(y_class, y_score)
+
+def fproc_plot_v2(fpr, tpr, im_total):
+    global nbP
+    global nbN
+
+    fppi = []  ## FP per image
+
+    for x in fpr:
+        fppi.append(x * nbN / im_total)
+
+    return fppi
+
+
+
+def score_v2(data):
+    list_point = [1.0/8, 1.0/4, 1.0/2, 1.0, 2.0, 4.0, 8.0]
+    list_sens = [0]*7
+            
+    fppi = data[0]
+    sens = data[1]
+
+    for i in range(7):
+        f = 0
+        if fppi[0]>list_point[i]:
+            list_sens[i] = 0
+        else:
+            for j in range(len(fppi)):
+                if f==1:
+                    break
+                if fppi[j]>=list_point[i]:
+                    f = 1
+                    p2 = fppi[j]
+                    v2 = sens[j]
+                    p1 = fppi[j-1]
+                    v1 = sens[j-1]
+            k = (v2-v1)/(p2-p1)
+            c = v1-k*p1
+            list_sens[i] = k*list_point[i]+c
+    print list_sens
+    print "Final score: ", sum(list_sens)/7
+    return round(sum(list_sens)/7,3)
+
+
+
+
 
 def score(data):
     list_point = [1.0/8, 1.0/4, 1.0/2, 1.0, 2.0, 4.0, 8.0]
@@ -117,6 +189,27 @@ def fproc_plot(ma,im_total):
     return [fppi,sens]
 
 im_total_eophtha = 148
+
+fpr, tpr, th= getROC(RFResult)
+
+fppi = fproc_plot_v2(fpr, tpr, im_total_eophtha)
+
+
+plt.plot(fppi,tpr, '-b',label='sensitivity vs false positive rate',linewidth=1.0)
+
+plt.ylim([0,1])
+# plt.xlim([0.9,30])
+# plt.xlim([0,1])
+plt.yticks( [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1] )
+plt.xscale('log')
+
+plt.xlabel("false positive rate")
+plt.ylabel("Sensitivity")
+
+plt.grid()
+plt.show()
+
+ipdb.set_trace()
 
 roc3a = fproc_plot(ma3a,im_total_eophtha)
 roc3b = fproc_plot(ma3b,im_total_eophtha)
